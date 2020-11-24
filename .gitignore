@@ -1,0 +1,14 @@
+build
+compile_commands.json
+hdTanto.so
+Kitchen_set
+plugInfo.json
+tanto
+testenv
+.clangd
+
+tantoren/build
+tantoren/compile_commands.json
+tantoren/libtantoren.so
+tantoren/tanto
+tantoren/shaders/spv
