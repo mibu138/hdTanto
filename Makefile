@@ -25,7 +25,10 @@ OBJS = \
 
 all: delegate 
 
-delegate: $(OBJS)
+renderer:
+	cd tantoren ; make ; cd ..
+
+delegate: $(OBJS) renderer
 	$(CC) $(LDFLAGS) -shared -Wl,--no-undefined -o $(NAME).so $(OBJS) $(LIBS) -lhf
 
 test: testenv/testMyDelegate.cpp delegate

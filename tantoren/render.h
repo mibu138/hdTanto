@@ -19,9 +19,11 @@ void  r_InitRenderer();
 void  r_SetViewport(unsigned int width, unsigned int height);
 void  r_UpdateRenderCommands(Tanto_V_BufferRegion* colorBuffer);
 void  r_LoadMesh(Tanto_R_Mesh mesh);
+void  r_Render(void);
 void  r_ClearMesh(void);
 void  r_CleanUp(void);
-void  r_RecreateSwapchain(void);
+void  r_UpdateViewport(unsigned int width, unsigned int height,
+        Tanto_V_BufferRegion* colorBuffer);
 const Tanto_R_Mesh* r_GetMesh(void);
 
 #endif /* end of include guard: R_COMMANDS_H */

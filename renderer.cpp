@@ -28,19 +28,26 @@ HdTantoRenderer::~HdTantoRenderer()
 {
 }
 
-void HdTantoRenderer::Initialize()
+void HdTantoRenderer::Initialize(unsigned int width, unsigned int height)
 {
+    r_SetViewport(width, height);
     r_InitRenderer();
 }
 
-void HdTantoRenderer::SetViewport(unsigned int width, unsigned int height)
+void HdTantoRenderer::UpdateViewport(unsigned int width, unsigned int height,
+        HdTantoRenderBuffer* colorBuffer)
 {
-    r_SetViewport(width, height);
+    r_UpdateViewport(width, height, colorBuffer->GetBufferRegion());
 }
 
 void HdTantoRenderer::UpdateRender(HdTantoRenderBuffer* colorBuffer)
 {
     r_UpdateRenderCommands(colorBuffer->GetBufferRegion());
+}
+
+void HdTantoRenderer::Render(HdRenderThread *renderThread)
+{
+    r_Render();
 }
 
 PXR_NAMESPACE_CLOSE_SCOPE

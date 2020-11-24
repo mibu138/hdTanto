@@ -66,12 +66,20 @@ HdTantoPass::_Execute(
         _width = vp[2];
         _height = vp[3];
 
-        _renderer.SetViewport(_width, _height);
-        _renderer.Initialize();
-
-
         HdTantoRenderBuffer* cb = static_cast<HdTantoRenderBuffer*>(bindings[0].renderBuffer);
-        _renderer.UpdateRender(cb);
+        if (!initialized)
+        {
+            _renderer.Initialize(_width, _height);
+
+            _renderer.UpdateRender(cb);
+
+            initialized = true;
+        }
+
+        else
+        {
+            _renderer.UpdateViewport(_width, _height, cb);
+        }
     }
 
     // Determine whether we need to update the renderer AOV bindings.
@@ -95,15 +103,8 @@ HdTantoPass::_Execute(
     HdTantoRenderBuffer* rb = static_cast<HdTantoRenderBuffer*>(bindings[0].renderBuffer);
     size_t formatSize = HdDataSizeOfFormat(rb->GetFormat());
     std::cout << "Format size: " << formatSize << '\n';
-    uint8_t* buffer = (uint8_t*)rb->Map();
-    for (int i = 0; i < _height * _width; i++) 
-    {
-        const size_t cur = i * formatSize;
-        buffer[cur + 0] = 0;
-        buffer[cur + 1] = 200;
-        buffer[cur + 2] = 14;
-        buffer[cur + 3] = 255;
-    }
+    rb->Map();
+    _renderer.Render(NULL);
     rb->Unmap();
     //    //_renderThread->StopRender();
     //

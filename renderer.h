@@ -32,7 +32,8 @@ public:
     /// Specify a new viewport size for the sample/color buffer.
     ///   \param width The new viewport width.
     ///   \param height The new viewport height.
-    void SetViewport(unsigned int width, unsigned int height);
+    void UpdateViewport(unsigned int width, unsigned int height,
+        HdTantoRenderBuffer* colorBuffer);
 
     /// Set the camera to use for rendering.
     ///   \param viewMatrix The camera's world-to-view matrix.
@@ -56,7 +57,7 @@ public:
     /// Clear the bound aov buffers (typically before rendering).
     void Clear();
 
-    void Initialize();
+    void Initialize(unsigned int width, unsigned int height);
 
 private:
     HdRenderPassAovBindingVector _aovBindings;

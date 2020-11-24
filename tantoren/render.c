@@ -17,9 +17,6 @@
 
 #define SPVDIR "./shaders/spv"
 
-static uint32_t windowWidth;
-static uint32_t windowHeight;
-
 static Tanto_V_Image attachmentColor;
 static Tanto_V_Image attachmentDepth;
 
@@ -48,7 +45,7 @@ typedef enum {
 static void initAttachments(void)
 {
     attachmentColor = tanto_v_CreateImage(
-        windowWidth, windowHeight,
+        TANTO_WINDOW_WIDTH, TANTO_WINDOW_HEIGHT,
         colorFormat,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
@@ -56,7 +53,7 @@ static void initAttachments(void)
         VK_SAMPLE_COUNT_1_BIT);
 
     attachmentDepth = tanto_v_CreateImage(
-        windowWidth, windowHeight,
+        TANTO_WINDOW_WIDTH, TANTO_WINDOW_HEIGHT,
         depthFormat,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_SAMPLED_BIT,
@@ -141,8 +138,8 @@ static void initFramebuffer(void)
         .renderPass = renderpass,
         .attachmentCount = 2,
         .pAttachments = attachments,
-        .width = windowWidth,
-        .height = windowHeight,
+        .width = TANTO_WINDOW_WIDTH,
+        .height = TANTO_WINDOW_HEIGHT,
         .layers = 1,
     };
 
@@ -330,21 +327,19 @@ void r_Render(void)
     tanto_v_SubmitAndWait(&cmdPoolRender, 0);
 }
 
-void r_RecreateSwapchain(void)
+void r_UpdateViewport(unsigned int width, unsigned int height,
+        Tanto_V_BufferRegion* colorBuffer)
 {
     vkDeviceWaitIdle(device);
+    r_SetViewport(width, height);
 
     r_CleanUp();
 
-    tanto_r_RecreateSwapchain();
     initAttachments();
     initPipelines();
     initFramebuffer();
 
-    for (int i = 0; i < TANTO_FRAME_COUNT; i++) 
-    {
-        r_UpdateRenderCommands(i);
-    }
+    r_UpdateRenderCommands(colorBuffer);
 }
 
 void r_CleanUp(void)
@@ -357,6 +352,6 @@ void r_CleanUp(void)
 
 void  r_SetViewport(unsigned int width, unsigned int height)
 {
-    windowWidth = width;
-    windowHeight = height;
+    TANTO_WINDOW_WIDTH = width;
+    TANTO_WINDOW_HEIGHT = height;
 }
