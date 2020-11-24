@@ -31,7 +31,7 @@ static Tanto_V_BufferRegion uniformBufferRegion;
 
 static Tanto_V_CommandPool cmdPoolRender;
 
-static Tanto_R_Primitive triangle;
+static Tanto_R_Primitive prim;
 
 typedef enum {
     R_PIPE_LAYOUT_MAIN,
@@ -239,21 +239,21 @@ static void mainRender(const VkCommandBuffer* cmdBuf, const VkRenderPassBeginInf
     vkCmdBeginRenderPass(*cmdBuf, rpassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     const VkBuffer vertBuffers[2] = {
-        triangle.vertexRegion.buffer,
-        triangle.vertexRegion.buffer
+        prim.vertexRegion.buffer,
+        prim.vertexRegion.buffer
     };
 
     const VkDeviceSize attrOffsets[2] = {
-        triangle.attrOffsets[0] + triangle.vertexRegion.offset,
-        triangle.attrOffsets[1] + triangle.vertexRegion.offset,
+        prim.attrOffsets[0] + prim.vertexRegion.offset,
+        prim.attrOffsets[1] + prim.vertexRegion.offset,
     };
 
     vkCmdBindVertexBuffers(*cmdBuf, 0, 2, vertBuffers, attrOffsets);
 
-    vkCmdBindIndexBuffer(*cmdBuf, triangle.indexRegion.buffer, 
-            triangle.indexRegion.offset, TANTO_VERT_INDEX_TYPE);
+    vkCmdBindIndexBuffer(*cmdBuf, prim.indexRegion.buffer, 
+            prim.indexRegion.offset, TANTO_VERT_INDEX_TYPE);
 
-    vkCmdDrawIndexed(*cmdBuf, triangle.indexCount, 1, 0, 0, 0);
+    vkCmdDrawIndexed(*cmdBuf, prim.indexCount, 1, 0, 0, 0);
 
     vkCmdEndRenderPass(*cmdBuf);
 }
@@ -269,7 +269,7 @@ void r_InitRenderer()
 
     cmdPoolRender = tanto_v_RequestCommandPool(TANTO_V_QUEUE_GRAPHICS_TYPE);
 
-    triangle = tanto_r_CreateTriangle();
+    prim = tanto_r_CreateTriangle();
 }
 
 void r_UpdateRenderCommands(Tanto_V_BufferRegion* colorBuffer)
@@ -342,6 +342,13 @@ void r_UpdateViewport(unsigned int width, unsigned int height,
     r_UpdateRenderCommands(colorBuffer);
 }
 
+void r_UpdatePrimitive(Tanto_R_Primitive newPrim)
+{
+    tanto_v_FreeBufferRegion(&prim.indexRegion);
+    tanto_v_FreeBufferRegion(&prim.vertexRegion);
+    prim = newPrim;
+}
+
 void r_CleanUp(void)
 {
     vkDestroyFramebuffer(device, framebuffer, NULL);
@@ -350,8 +357,16 @@ void r_CleanUp(void)
     vkDestroyPipeline(device, pipelineMain, NULL);
 }
 
+void r_UpdateCamera(Tanto_Camera camera)
+{
+    UniformBuffer* uboData = (UniformBuffer*)(uniformBufferRegion.hostData);
+    uboData->matProj = camera.proj;
+    uboData->matView = camera.view;
+}
+
 void  r_SetViewport(unsigned int width, unsigned int height)
 {
     TANTO_WINDOW_WIDTH = width;
     TANTO_WINDOW_HEIGHT = height;
 }
+

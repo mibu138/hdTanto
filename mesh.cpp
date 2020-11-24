@@ -27,8 +27,9 @@
 
 PXR_NAMESPACE_OPEN_SCOPE
 
-HdTantoMesh::HdTantoMesh(SdfPath const& id, SdfPath const& instancerId)
-    : HdMesh(id, instancerId)
+HdTantoMesh::HdTantoMesh(HdTantoRenderer& renderer, SdfPath const& id, SdfPath const& instancerId)
+    : HdMesh(id, instancerId),
+    _renderer(renderer)
 {
 }
 

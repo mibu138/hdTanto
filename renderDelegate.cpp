@@ -125,7 +125,7 @@ HdTantoDelegate::CreateRprim(TfToken const& typeId,
         << std::endl;
 
     if (typeId == HdPrimTypeTokens->mesh) {
-        return new HdTantoMesh(rprimId, instancerId);
+        return new HdTantoMesh(_renderer, rprimId, instancerId);
     } else {
         TF_CODING_ERROR("Unknown Rprim type=%s id=%s", 
             typeId.GetText(), 

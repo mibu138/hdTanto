@@ -45,6 +45,19 @@ void HdTantoRenderer::UpdateRender(HdTantoRenderBuffer* colorBuffer)
     r_UpdateRenderCommands(colorBuffer->GetBufferRegion());
 }
 
+void HdTantoRenderer::SetCamera(const GfMatrix4f* viewMatrix, const GfMatrix4f* projMatrix)
+{
+    Mat4* view = (Mat4*)viewMatrix;
+    Mat4* proj = (Mat4*)projMatrix;
+
+    Tanto_Camera camera = {
+        .view = *view,
+        .proj = *proj,
+    };
+
+    r_UpdateCamera(camera);
+}
+
 void HdTantoRenderer::Render(HdRenderThread *renderThread)
 {
     r_Render();

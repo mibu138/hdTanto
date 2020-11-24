@@ -27,6 +27,8 @@
 #include "pxr/imaging/hd/mesh.h"
 #include "pxr/base/gf/matrix4f.h"
 
+#include "renderer.h"
+
 PXR_NAMESPACE_OPEN_SCOPE
 
 /// \class HdTantoMesh
@@ -57,7 +59,7 @@ public:
     ///   \param id The scene-graph path to this mesh.
     ///   \param instancerId If specified, the HdInstancer at this id uses
     ///                      this mesh as a prototype.
-    HdTantoMesh(SdfPath const& id, SdfPath const& instancerId = SdfPath());
+    HdTantoMesh(HdTantoRenderer& renderer, SdfPath const& id, SdfPath const& instancerId = SdfPath());
 
     /// HdTantoMesh destructor.
     ~HdTantoMesh() override = default;
@@ -131,9 +133,12 @@ protected:
     HdTantoMesh(const HdTantoMesh&) = delete;
     HdTantoMesh &operator =(const HdTantoMesh&) = delete;
 private:
+    HdTantoRenderer& _renderer;
+
     HdMeshTopology _topology;
     GfMatrix4f _transform;
     VtVec3fArray _points;
+
 
     // Populate the embree geometry object based on scene data.
     void _PopulateTantoMesh(HdSceneDelegate *sceneDelegate,
