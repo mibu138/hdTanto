@@ -1,4 +1,5 @@
 #include "renderBuffer.h"
+#include "tanto/v_memory.h"
 #include <iostream>
 
 PXR_NAMESPACE_OPEN_SCOPE
@@ -54,8 +55,8 @@ HdTantoRenderBuffer::_Deallocate()
     _width = 0;
     _height = 0;
     _format = HdFormatInvalid;
-    _buffer.resize(0);
     _isMapped = false;
+    tanto_v_FreeBufferRegion(&_buffer);
 }
 
 /*static*/
@@ -69,7 +70,8 @@ HdTantoRenderBuffer::Allocate(GfVec3i const& dimensions,
                                HdFormat format,
                                bool multiSampled)
 {
-    _Deallocate();
+    if (_buffer.hostData)
+        _Deallocate();
 
     std::cout << "ALLOCATE CALLED!@!! " << '\n';
 
@@ -85,7 +87,7 @@ HdTantoRenderBuffer::Allocate(GfVec3i const& dimensions,
     _height = dimensions[1];
     _format = format;
     const size_t bufferSize = _GetBufferSize(GfVec2i(_width, _height), format);
-    _buffer.resize(bufferSize);
+    _buffer = tanto_v_RequestBufferRegion(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT, TANTO_V_MEMORY_HOST_TRANSFER_TYPE);
     std::cout << "Setting buffer size to: " << bufferSize << '\n';
 
     return true;
@@ -102,6 +104,11 @@ HdTantoRenderBuffer::Resolve()
     // not multiSampled yet
 
     return;
+}
+
+Tanto_V_BufferRegion* HdTantoRenderBuffer::GetBufferRegion()
+{
+    return &_buffer;
 }
 
 PXR_NAMESPACE_CLOSE_SCOPE

@@ -6,9 +6,11 @@ plugInfo.json
 tanto
 testenv
 .clangd
+shaders
 
 tantoren/build
 tantoren/compile_commands.json
 tantoren/libtantoren.so
 tantoren/tanto
 tantoren/shaders/spv
+tantoren/tags

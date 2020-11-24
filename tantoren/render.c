@@ -141,8 +141,8 @@ static void initFramebuffer(void)
         .renderPass = renderpass,
         .attachmentCount = 2,
         .pAttachments = attachments,
-        .width = TANTO_WINDOW_WIDTH,
-        .height = TANTO_WINDOW_HEIGHT,
+        .width = windowWidth,
+        .height = windowHeight,
         .layers = 1,
     };
 
@@ -275,7 +275,7 @@ void r_InitRenderer()
     triangle = tanto_r_CreateTriangle();
 }
 
-void r_UpdateRenderCommands(const int8_t frameIndex)
+void r_UpdateRenderCommands(Tanto_V_BufferRegion* colorBuffer)
 {
     vkResetCommandPool(device, cmdPoolRender.handle, 0);
 
@@ -297,6 +297,30 @@ void r_UpdateRenderCommands(const int8_t frameIndex)
     };
 
     mainRender(&cmdPoolRender.buffer, &rpassInfo);
+
+    const VkImageSubresourceLayers subRes = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseArrayLayer = 0,
+        .layerCount = 1, 
+        .mipLevel = 0,
+    };
+
+    const VkOffset3D imgOffset = {
+        .x = 0,
+        .y = 0,
+        .z = 0
+    };
+
+    const VkBufferImageCopy imgCopy = {
+        .imageOffset = imgOffset,
+        .imageExtent = attachmentColor.extent,
+        .imageSubresource = subRes,
+        .bufferOffset = colorBuffer->offset,
+        .bufferImageHeight = 0,
+        .bufferRowLength = 0
+    };
+
+    vkCmdCopyImageToBuffer(cmdPoolRender.buffer, attachmentColor.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, colorBuffer->buffer, 1, &imgCopy);
 
     V_ASSERT( vkEndCommandBuffer(cmdPoolRender.buffer) );
 }
@@ -329,4 +353,10 @@ void r_CleanUp(void)
     tanto_v_DestroyImage(attachmentDepth);
     tanto_v_DestroyImage(attachmentColor);
     vkDestroyPipeline(device, pipelineMain, NULL);
+}
+
+void  r_SetViewport(unsigned int width, unsigned int height)
+{
+    windowWidth = width;
+    windowHeight = height;
 }

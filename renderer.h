@@ -6,6 +6,8 @@
 #include <pxr/imaging/hd/renderPass.h>
 #include <pxr/imaging/hd/renderThread.h>
 
+#include "renderBuffer.h"
+
 PXR_NAMESPACE_OPEN_SCOPE
 
 /// \class HdEmbreeRenderer
@@ -36,6 +38,8 @@ public:
     ///   \param viewMatrix The camera's world-to-view matrix.
     ///   \param projMatrix The camera's view-to-NDC projection matrix.
     void SetCamera(const GfMatrix4d& viewMatrix, const GfMatrix4d& projMatrix);
+    
+    void UpdateRender(HdTantoRenderBuffer* colorBuffer);
 
     /// Set the aov bindings to use for rendering.
     ///   \param aovBindings A list of aov bindings.
@@ -52,10 +56,11 @@ public:
     /// Clear the bound aov buffers (typically before rendering).
     void Clear();
 
+    void Initialize();
+
 private:
     HdRenderPassAovBindingVector _aovBindings;
 
-    void Initialize();
 };
 
 PXR_NAMESPACE_CLOSE_SCOPE

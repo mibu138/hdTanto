@@ -32,8 +32,10 @@ PXR_NAMESPACE_OPEN_SCOPE
 
 HdTantoPass::HdTantoPass(
     HdRenderIndex *index,
-    HdRprimCollection const &collection)
+    HdRprimCollection const &collection,
+    HdTantoRenderer& renderer)
     : HdRenderPass(index, collection),
+    _renderer(renderer),
     _width(0), _height(0),
     _aovBindings(),
     _colorBuffer(SdfPath::EmptyPath())
@@ -57,14 +59,19 @@ HdTantoPass::_Execute(
     GfVec4f vp = renderPassState->GetViewport();
     std::cout << "Viewport: " << vp << '\n';
 
+    HdRenderPassAovBindingVector bindings =
+        renderPassState->GetAovBindings();
+
     if (_width != vp[2] || _height != vp[3]) {
         _width = vp[2];
         _height = vp[3];
 
-        //_renderThread->StopRender();
-        //_renderer->SetViewport(_width, _height);
-        _colorBuffer.Allocate(GfVec3i(_width, _height, 1), HdFormatUNorm8Vec4,
-                              /*multiSampled=*/true);
+        _renderer.SetViewport(_width, _height);
+        _renderer.Initialize();
+
+
+        HdTantoRenderBuffer* cb = static_cast<HdTantoRenderBuffer*>(bindings[0].renderBuffer);
+        _renderer.UpdateRender(cb);
     }
 
     // Determine whether we need to update the renderer AOV bindings.
@@ -75,8 +82,6 @@ HdTantoPass::_Execute(
     //
     // If the renderer AOV bindings are empty, force a bindings update so that
     // we always get a chance to add color/depth on the first time through.
-    HdRenderPassAovBindingVector bindings =
-        renderPassState->GetAovBindings();
     std::cout << "Bindings size: " << bindings.size() << '\n';
 
     assert(bindings.size() != 0);

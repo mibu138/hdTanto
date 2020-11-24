@@ -97,7 +97,7 @@ public:
     ///   \return The address of the buffer.
     virtual void* Map() override {
         _isMapped = true;
-        return _buffer.data();
+        return _buffer.hostData;
     }
 
     /// Unmap the buffer.
@@ -121,6 +121,8 @@ public:
     /// Resolve the sample buffer into final values.
     virtual void Resolve() override;
 
+    Tanto_V_BufferRegion* GetBufferRegion(void);
+
 private:
     // Release any allocated resources.
     virtual void _Deallocate() override;
@@ -133,7 +135,7 @@ private:
     HdFormat _format;
 
     // The resolved output buffer.
-    std::vector<uint8_t> _buffer;
+    Tanto_V_BufferRegion _buffer;
 
     bool _isMapped;
 };

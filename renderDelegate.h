@@ -29,6 +29,8 @@
 #include "pxr/imaging/hd/resourceRegistry.h"
 #include "pxr/base/tf/staticTokens.h"
 
+#include "renderer.h"
+
 PXR_NAMESPACE_OPEN_SCOPE
 
 ///
@@ -102,9 +104,10 @@ private:
     static const TfTokenVector SUPPORTED_SPRIM_TYPES;
     static const TfTokenVector SUPPORTED_BPRIM_TYPES;
 
-    void _Initialize();
-
     HdResourceRegistrySharedPtr _resourceRegistry;
+    HdTantoRenderer _renderer;
+
+    void _Initialize();
 
     // This class does not support copying.
     HdTantoDelegate(const HdTantoDelegate &) = delete;

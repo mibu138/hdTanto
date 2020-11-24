@@ -15,8 +15,9 @@ typedef struct {
     Mat4 matProj;
 } UniformBuffer;
 
-void  r_InitRenderer(void);
-void  r_UpdateRenderCommands(const int8_t frameIndex);
+void  r_InitRenderer();
+void  r_SetViewport(unsigned int width, unsigned int height);
+void  r_UpdateRenderCommands(Tanto_V_BufferRegion* colorBuffer);
 void  r_LoadMesh(Tanto_R_Mesh mesh);
 void  r_ClearMesh(void);
 void  r_CleanUp(void);

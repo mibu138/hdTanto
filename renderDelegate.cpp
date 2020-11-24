@@ -111,7 +111,7 @@ HdTantoDelegate::CreateRenderPass(
     std::cout << "Create RenderPass with Collection=" 
         << collection.GetName() << std::endl; 
 
-    return HdRenderPassSharedPtr(new HdTantoPass(index, collection));  
+    return HdRenderPassSharedPtr(new HdTantoPass(index, collection, _renderer));  
 }
 
 HdRprim *

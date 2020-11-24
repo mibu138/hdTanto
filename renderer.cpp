@@ -15,6 +15,13 @@ PXR_NAMESPACE_OPEN_SCOPE
 
 HdTantoRenderer::HdTantoRenderer()
 {
+    tanto_v_config.rayTraceEnabled = true;
+#ifndef NDEBUG
+    tanto_v_config.validationEnabled = true;
+#else
+    tanto_v_config.validationEnabled = false;
+#endif
+    tanto_v_Init();
 }
 
 HdTantoRenderer::~HdTantoRenderer()
@@ -23,14 +30,17 @@ HdTantoRenderer::~HdTantoRenderer()
 
 void HdTantoRenderer::Initialize()
 {
-    tanto_v_config.rayTraceEnabled = true;
-#ifndef NDEBUG
-    tanto_v_config.validationEnabled = true;
-#else
-    tanto_v_config.validationEnabled = false;
-#endif
-    tanto_v_Init();
     r_InitRenderer();
+}
+
+void HdTantoRenderer::SetViewport(unsigned int width, unsigned int height)
+{
+    r_SetViewport(width, height);
+}
+
+void HdTantoRenderer::UpdateRender(HdTantoRenderBuffer* colorBuffer)
+{
+    r_UpdateRenderCommands(colorBuffer->GetBufferRegion());
 }
 
 PXR_NAMESPACE_CLOSE_SCOPE

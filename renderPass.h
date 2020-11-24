@@ -28,6 +28,7 @@
 #include "pxr/imaging/hd/renderPass.h"
 #include "pxr/imaging/hd/renderThread.h"
 #include "renderBuffer.h"
+#include "renderer.h"
 
 PXR_NAMESPACE_OPEN_SCOPE
 
@@ -44,7 +45,7 @@ public:
     ///   \param index The render index containing scene data to render.
     ///   \param collection The initial rprim collection for this renderpass.
     HdTantoPass(HdRenderIndex *index,
-                       HdRprimCollection const &collection);
+                       HdRprimCollection const &collection, HdTantoRenderer& renderer);
 
     /// Renderpass destructor.
     virtual ~HdTantoPass();
@@ -62,6 +63,8 @@ protected:
 private:
     // A handle to the render thread.
     HdRenderThread* _renderThread;
+
+    HdTantoRenderer& _renderer;
 
     // A handle to the global renderer.
     // The width of the viewport we're rendering into.
