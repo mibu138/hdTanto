@@ -98,17 +98,7 @@ HdTantoPass::_Execute(
 
     _renderer.SetCamera(view, proj);
 
-    assert(bindings.size() != 0);
-
-    HdRenderPassAovBinding aovColor = bindings[0];
-
-    std::cout << "Aov[0] name:   " << aovColor.aovName << '\n';
-    std::cout << "Aov[0] format: " << aovColor.renderBuffer->GetFormat() << '\n';
-    std::cout << "Aov[0] clearColor: " << aovColor.clearValue << '\n';
-    
     HdTantoRenderBuffer* rb = static_cast<HdTantoRenderBuffer*>(bindings[0].renderBuffer);
-    size_t formatSize = HdDataSizeOfFormat(rb->GetFormat());
-    std::cout << "Format size: " << formatSize << '\n';
     rb->Map();
     _renderer.Render(NULL);
     rb->Unmap();
