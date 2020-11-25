@@ -24,6 +24,7 @@ HdTantoRenderer::HdTantoRenderer()
     tanto_v_config.validationEnabled = false;
 #endif
     tanto_v_Init();
+    r_InitScene();
 }
 
 HdTantoRenderer::~HdTantoRenderer()
@@ -49,13 +50,15 @@ void HdTantoRenderer::UpdateRender(HdTantoRenderBuffer* colorBuffer)
 
 void HdTantoRenderer::SetCamera(const GfMatrix4f& viewMatrix, const GfMatrix4f& projMatrix)
 {
+    //GfMatrix4f viewT = viewMatrix.GetTranspose();
+    //GfMatrix4f projT = viewMatrix.GetTranspose();
     Mat4* view = (Mat4*)(viewMatrix.data());
     Mat4* proj = (Mat4*)(projMatrix.data());
 
     std::cout << "View0: \n" << viewMatrix << '\n';
     std::cout << "Proj0: \n" << projMatrix << '\n';
 
-    proj->x[1][1] *= -1;
+    //proj->x[1][1] *= -1;
 
     printf("View1:\n");
     printMat4(view);
@@ -68,6 +71,18 @@ void HdTantoRenderer::SetCamera(const GfMatrix4f& viewMatrix, const GfMatrix4f& 
     };
 
     r_UpdateCamera(camera);
+}
+
+void HdTantoRenderer::SetPrimTransform(const GfMatrix4f& xform)
+{
+    Mat4* m = (Mat4*)(xform.data());
+    r_UpdatePrimTransform(*m);
+}
+
+void HdTantoRenderer::UpdatePrim(Tanto_R_Primitive prim)
+{
+    printf("6\n");
+    r_UpdatePrimitive(prim);
 }
 
 void HdTantoRenderer::Render(HdRenderThread *renderThread)

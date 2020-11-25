@@ -22,6 +22,8 @@
 // language governing permissions and limitations under the Apache License.
 //
 #include "mesh.h"
+#include <cstring>
+#include <pxr/imaging/hd/meshUtil.h>
 
 #include <iostream>
 
@@ -98,11 +100,16 @@ void HdTantoMesh::_PopulateTantoMesh(HdSceneDelegate *sceneDelegate,
     ////////////////////////////////////////////////////////////////////////
     // 1. Pull scene data.
 
+    bool topologyDirty  = false;
+    bool pointsDirty    = false;
+    bool transformDirty = false;
+
     if (HdChangeTracker::IsPrimvarDirty(*dirtyBits, id, HdTokens->points)) 
     {
         VtValue value = sceneDelegate->Get(id, HdTokens->points);
         _points = value.Get<VtVec3fArray>();
         std::cout << "Points dirty!!" << '\n';
+        pointsDirty = true;
     }
 
     if (HdChangeTracker::IsTopologyDirty(*dirtyBits, id)) 
@@ -115,12 +122,30 @@ void HdTantoMesh::_PopulateTantoMesh(HdSceneDelegate *sceneDelegate,
         _topology = HdMeshTopology(GetMeshTopology(sceneDelegate), refineLevel);
         _topology.SetSubdivTags(subdivTags);
         std::cout << "Topology dirty!!" << '\n';
+        topologyDirty = true;
     }
 
     if (HdChangeTracker::IsTransformDirty(*dirtyBits, id)) 
     {
         _transform = GfMatrix4f(sceneDelegate->GetTransform(id));
         std::cout << "Transform dirty!!" << '\n';
+        transformDirty = true;
+        _renderer.SetPrimTransform(_transform);
+    }
+
+    if (pointsDirty && topologyDirty)
+    {
+        // must create a new prim
+        const uint32_t pointCount = _points.size();
+        HdMeshUtil meshUtil(&_topology, GetId());
+        meshUtil.ComputeTriangleIndices(&_triangulatedIndices, &_trianglePrimitiveParams);
+        Tanto_R_Primitive prim = tanto_r_CreateEmptySimplePrimitive(pointCount, _triangulatedIndices.size() * 3);
+        printf("3\n");
+        memcpy(prim.vertexRegion.hostData, _points.data(), prim.vertexCount * sizeof(Tanto_R_Attribute));
+        printf("4\n");
+        memcpy(prim.indexRegion.hostData,  _triangulatedIndices.data(), prim.indexCount * sizeof(Tanto_R_Index));
+        printf("5\n");
+        _renderer.UpdatePrim(prim);
     }
 }
 

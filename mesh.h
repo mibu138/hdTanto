@@ -135,9 +135,11 @@ protected:
 private:
     HdTantoRenderer& _renderer;
 
+    VtVec3fArray   _points;
     HdMeshTopology _topology;
-    GfMatrix4f _transform;
-    VtVec3fArray _points;
+    VtVec3iArray   _triangulatedIndices;
+    VtIntArray     _trianglePrimitiveParams;
+    GfMatrix4f     _transform;
 
 
     // Populate the embree geometry object based on scene data.

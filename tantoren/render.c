@@ -178,6 +178,8 @@ static void initPipelines(void)
         .payload.rasterInfo = {
             .renderPass = renderpass, 
             .sampleCount = VK_SAMPLE_COUNT_1_BIT,
+            .frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+            .polygonMode = VK_POLYGON_MODE_FILL,
             .vertexDescription = tanto_r_GetVertexDescription3D_Simple(),
             .vertShader = SPVDIR"/template-vert.spv",
             .fragShader = SPVDIR"/template-frag.spv"
@@ -263,18 +265,26 @@ static void mainRender(const VkCommandBuffer* cmdBuf, const VkRenderPassBeginInf
     vkCmdEndRenderPass(*cmdBuf);
 }
 
-void r_InitRenderer()
+void r_InitScene(void)
+{
+    // we just want to initialize the mesh buffers first because the mesh syncs get called before 
+    // we know the window size
+    initDescriptorSetsAndPipelineLayouts();
+    updateStaticDescriptors();
+}
+
+void r_InitRenderer(void)
 {
     initAttachments();
     initRenderPass();
     initFramebuffer();
-    initDescriptorSetsAndPipelineLayouts();
+    //initDescriptorSetsAndPipelineLayouts();
     initPipelines();
-    updateStaticDescriptors();
+    //updateStaticDescriptors();
 
     cmdPoolRender = tanto_v_RequestCommandPool(TANTO_V_QUEUE_GRAPHICS_TYPE);
 
-    prim = tanto_r_CreateTriangle();
+    //prim = tanto_r_CreateTriangle();
 }
 
 void r_UpdateRenderCommands(Tanto_V_BufferRegion* colorBuffer)
@@ -349,9 +359,20 @@ void r_UpdateViewport(unsigned int width, unsigned int height,
 
 void r_UpdatePrimitive(Tanto_R_Primitive newPrim)
 {
-    tanto_v_FreeBufferRegion(&prim.indexRegion);
-    tanto_v_FreeBufferRegion(&prim.vertexRegion);
+    printf("7\n");
+    if (prim.vertexRegion.hostData)
+    {
+        tanto_v_FreeBufferRegion(&prim.indexRegion);
+        printf("8\n");
+        tanto_v_FreeBufferRegion(&prim.vertexRegion);
+    }
     prim = newPrim;
+}
+
+void r_UpdatePrimTransform(Mat4 m)
+{
+    UniformBuffer* uboData = (UniformBuffer*)(uniformBufferRegion.hostData);
+    uboData->matModel = m;
 }
 
 void r_CleanUp(void)
