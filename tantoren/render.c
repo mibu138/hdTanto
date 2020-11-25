@@ -202,6 +202,11 @@ static void updateStaticDescriptors(void)
     uboData->matView  = view;
     uboData->matProj  = m_BuildPerspective(0.001, 100);
 
+    printf("Init view:\n");
+    printMat4(&uboData->matView);
+    printf("Init proj:\n");
+    printMat4(&uboData->matProj);
+
     VkDescriptorBufferInfo uboInfo = {
         .buffer = uniformBufferRegion.buffer,
         .offset = uniformBufferRegion.offset,

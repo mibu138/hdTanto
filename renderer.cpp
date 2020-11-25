@@ -1,4 +1,6 @@
 #include "renderer.h"
+#include <iostream>
+#include <pxr/base/gf/matrix4f.h>
 
 extern "C" 
 {
@@ -45,10 +47,20 @@ void HdTantoRenderer::UpdateRender(HdTantoRenderBuffer* colorBuffer)
     r_UpdateRenderCommands(colorBuffer->GetBufferRegion());
 }
 
-void HdTantoRenderer::SetCamera(const GfMatrix4f* viewMatrix, const GfMatrix4f* projMatrix)
+void HdTantoRenderer::SetCamera(const GfMatrix4f& viewMatrix, const GfMatrix4f& projMatrix)
 {
-    Mat4* view = (Mat4*)viewMatrix;
-    Mat4* proj = (Mat4*)projMatrix;
+    Mat4* view = (Mat4*)(viewMatrix.data());
+    Mat4* proj = (Mat4*)(projMatrix.data());
+
+    std::cout << "View0: \n" << viewMatrix << '\n';
+    std::cout << "Proj0: \n" << projMatrix << '\n';
+
+    proj->x[1][1] *= -1;
+
+    printf("View1:\n");
+    printMat4(view);
+    printf("Proj1:\n");
+    printMat4(proj);
 
     Tanto_Camera camera = {
         .view = *view,

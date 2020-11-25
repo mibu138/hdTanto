@@ -25,6 +25,7 @@
 #include <cstring>
 #include <pxr/imaging/hd/renderPassState.h>
 #include <pxr/imaging/hd/renderBuffer.h>
+#include <pxr/base/gf/matrix4f.h>
 
 #include <iostream>
 
@@ -91,6 +92,11 @@ HdTantoPass::_Execute(
     // If the renderer AOV bindings are empty, force a bindings update so that
     // we always get a chance to add color/depth on the first time through.
     std::cout << "Bindings size: " << bindings.size() << '\n';
+
+    const GfMatrix4f view = (GfMatrix4f)renderPassState->GetWorldToViewMatrix();
+    const GfMatrix4f proj = (GfMatrix4f)renderPassState->GetProjectionMatrix();
+
+    _renderer.SetCamera(view, proj);
 
     assert(bindings.size() != 0);
 

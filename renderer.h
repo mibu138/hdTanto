@@ -38,7 +38,7 @@ public:
     /// Set the camera to use for rendering.
     ///   \param viewMatrix The camera's world-to-view matrix.
     ///   \param projMatrix The camera's view-to-NDC projection matrix.
-    void SetCamera(const GfMatrix4f* viewMatrix, const GfMatrix4f* projMatrix);
+    void SetCamera(const GfMatrix4f& viewMatrix, const GfMatrix4f& projMatrix);
     
     void UpdateRender(HdTantoRenderBuffer* colorBuffer);
 
