@@ -24,6 +24,7 @@
 #include "mesh.h"
 #include <cstring>
 #include <pxr/imaging/hd/meshUtil.h>
+#include <pxr/imaging/hd/flatNormals.h>
 
 #include <iostream>
 
@@ -106,7 +107,7 @@ void HdTantoMesh::_PopulateTantoMesh(HdSceneDelegate *sceneDelegate,
 
     if (HdChangeTracker::IsPrimvarDirty(*dirtyBits, id, HdTokens->points)) 
     {
-        VtValue value = sceneDelegate->Get(id, HdTokens->points);
+        VtValue value = GetPoints(sceneDelegate);
         _points = value.Get<VtVec3fArray>();
         std::cout << "Points dirty!!" << '\n';
         pointsDirty = true;
@@ -137,14 +138,32 @@ void HdTantoMesh::_PopulateTantoMesh(HdSceneDelegate *sceneDelegate,
     {
         // must create a new prim
         const uint32_t pointCount = _points.size();
+        std::cout << "Points size: " << pointCount << '\n';
+        std::cout << "Points\n" << _points << '\n';
         HdMeshUtil meshUtil(&_topology, GetId());
         meshUtil.ComputeTriangleIndices(&_triangulatedIndices, &_trianglePrimitiveParams);
-        Tanto_R_Primitive prim = tanto_r_CreateEmptySimplePrimitive(pointCount, _triangulatedIndices.size() * 3);
+        VtValue triangulatedPosition;
+        VtArray<GfVec3f> faceNormals = Hd_FlatNormals::ComputeFlatNormals(&_topology, _points.data());
+        bool success = meshUtil.ComputeTriangulatedFaceVaryingPrimvar(faceNormals.data(), _points.size(), HdTypeFloatVec3, &triangulatedPosition);
+        assert(success);
+        std::cout << "Triangulated Normals : \n" << triangulatedPosition << '\n';
+        std::cout << "Trangulated Indices, size: " << _triangulatedIndices.size() << "\n" << _triangulatedIndices << "\n";
+        std::cout << "Trangulated Primitive Params, size: " << _trianglePrimitiveParams.size() << "\n" << _trianglePrimitiveParams << "\n";
+        Tanto_R_Primitive prim = tanto_r_CreatePrimitive(pointCount, _triangulatedIndices.size() * 3, 2);
         printf("3\n");
         memcpy(prim.vertexRegion.hostData, _points.data(), prim.vertexCount * sizeof(Tanto_R_Attribute));
         printf("4\n");
         memcpy(prim.indexRegion.hostData,  _triangulatedIndices.data(), prim.indexCount * sizeof(Tanto_R_Index));
+        Vec3* nIter = (Vec3*)(prim.vertexRegion.hostData + prim.attrOffsets[1]);
+        for (int i = 0; i < prim.vertexCount; i++) 
+        {
+            *nIter++ = (Vec3){{0.5, 0.5, 0.5}};
+        }
         printf("5\n");
+        VtValue normals = GetNormals(sceneDelegate);
+        std::cout << "Normals size: " << normals.GetArraySize() << '\n';
+        printf("Normals!\n");
+        std::cout << GetNormals(sceneDelegate) << '\n';
         _renderer.UpdatePrim(prim);
     }
 }

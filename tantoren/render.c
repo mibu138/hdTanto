@@ -19,6 +19,7 @@
 
 static Tanto_V_Image attachmentColor;
 static Tanto_V_Image attachmentDepth;
+static Tanto_V_Image blitTarget;
 
 static VkRenderPass  renderpass;
 static VkFramebuffer framebuffer;
@@ -58,6 +59,13 @@ static void initAttachments(void)
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_IMAGE_ASPECT_DEPTH_BIT,
+        VK_SAMPLE_COUNT_1_BIT);
+
+    blitTarget = tanto_v_CreateImage(
+        TANTO_WINDOW_WIDTH, TANTO_WINDOW_HEIGHT,
+        colorFormat,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT,
         VK_SAMPLE_COUNT_1_BIT);
 }
 
@@ -180,9 +188,9 @@ static void initPipelines(void)
             .sampleCount = VK_SAMPLE_COUNT_1_BIT,
             .frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE,
             .polygonMode = VK_POLYGON_MODE_FILL,
-            .vertexDescription = tanto_r_GetVertexDescription3D_Simple(),
-            .vertShader = SPVDIR"/template-vert.spv",
-            .fragShader = SPVDIR"/template-frag.spv"
+            .vertexDescription = tanto_r_GetVertexDescription3D_2Vec3(),
+            .vertShader = SPVDIR"/flat-vert.spv",
+            .fragShader = SPVDIR"/flat-frag.spv"
         }
     };
 
