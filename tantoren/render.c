@@ -17,6 +17,28 @@
 
 #define SPVDIR "./shaders/spv"
 
+#define MAX_PRIM_COUNT 500
+
+typedef struct {
+    int foo;
+    int bar;
+} PushConstants;
+
+typedef struct {
+    Mat4 matView;
+    Mat4 matProj;
+    Mat4 viewInv;
+    Mat4 projInv;
+} CameraUBO;
+
+typedef struct {
+    Mat4 xform[MAX_PRIM_COUNT];
+} TransformsUBO;
+
+typedef struct {
+   Tanto_R_Material material[MAX_PRIM_COUNT]; 
+} MaterialsUBO;
+
 static Tanto_V_Image attachmentColor;
 static Tanto_V_Image attachmentDepth;
 
@@ -24,14 +46,23 @@ static VkRenderPass  renderpass;
 static VkFramebuffer framebuffer;
 static VkPipeline    pipelineMain;
 
-static VkFormat colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
-static VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
-
-static Tanto_V_BufferRegion uniformBufferRegion;
+static const VkFormat colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
+static const VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 
 static Tanto_V_CommandPool cmdPoolRender;
 
-static Tanto_R_Primitive prim;
+static struct {
+    uint16_t          primCount;
+    CameraUBO*        camera;
+    Tanto_R_Primitive primitive[MAX_PRIM_COUNT];
+    TransformsUBO*    transforms;
+    MaterialsUBO*     materials;
+} scene;
+
+// should not be accessed directly. go through the scene.
+static Tanto_V_BufferRegion cameraBuffer;
+static Tanto_V_BufferRegion transformBuffer;
+static Tanto_V_BufferRegion materialBuffer;
 
 typedef enum {
     R_PIPE_LAYOUT_MAIN,
@@ -150,11 +181,22 @@ static void initDescriptorSetsAndPipelineLayouts(void)
 {
     const Tanto_R_DescriptorSet descriptorSets[] = {{
         .id = R_DESC_SET_MAIN,
-        .bindingCount = 1,
+        .bindingCount = 3,
         .bindings = {{
+            // camera
             .descriptorCount = 1,
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
+        },{
+            // prim transforms
+            .descriptorCount = 1,
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
+        },{
+            // materials
+            .descriptorCount = 1,
+            .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
         }}
     }};
 
@@ -193,27 +235,31 @@ static void initPipelines(void)
 // descriptors that do only need to have update called once and can be updated on initialization
 static void updateStaticDescriptors(void)
 {
-    uniformBufferRegion = tanto_v_RequestBufferRegion(sizeof(UniformBuffer), 
+    cameraBuffer = tanto_v_RequestBufferRegion(sizeof(CameraUBO), 
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, TANTO_V_MEMORY_HOST_GRAPHICS_TYPE);
-    memset(uniformBufferRegion.hostData, 0, sizeof(UniformBuffer));
-    UniformBuffer* uboData = (UniformBuffer*)(uniformBufferRegion.hostData);
 
-    Mat4 view = m_Ident_Mat4();
-    view = m_Translate_Mat4((Vec3){0, 0, -1}, &view);
+    materialBuffer = tanto_v_RequestBufferRegion(sizeof(MaterialsUBO), 
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, TANTO_V_MEMORY_HOST_GRAPHICS_TYPE);
 
-    uboData->matModel = m_Ident_Mat4();
-    uboData->matView  = view;
-    uboData->matProj  = m_BuildPerspective(0.001, 100);
+    transformBuffer = tanto_v_RequestBufferRegion(sizeof(TransformsUBO), 
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, TANTO_V_MEMORY_HOST_GRAPHICS_TYPE);
 
-    printf("Init view:\n");
-    printMat4(&uboData->matView);
-    printf("Init proj:\n");
-    printMat4(&uboData->matProj);
+    VkDescriptorBufferInfo cameraUbo = {
+        .buffer = cameraBuffer.buffer,
+        .offset = cameraBuffer.offset,
+        .range  = cameraBuffer.size
+    };
 
-    VkDescriptorBufferInfo uboInfo = {
-        .buffer = uniformBufferRegion.buffer,
-        .offset = uniformBufferRegion.offset,
-        .range  = uniformBufferRegion.size
+    VkDescriptorBufferInfo transformUbo = {
+        .buffer = transformBuffer.buffer,
+        .offset = transformBuffer.offset,
+        .range  = transformBuffer.size
+    };
+
+    VkDescriptorBufferInfo materialUbo = {
+        .buffer = materialBuffer.buffer,
+        .offset = materialBuffer.offset,
+        .range  = materialBuffer.size
     };
 
     VkWriteDescriptorSet writes[] = {{
@@ -223,7 +269,23 @@ static void updateStaticDescriptors(void)
         .dstBinding = 0,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .pBufferInfo = &uboInfo
+        .pBufferInfo = &cameraUbo
+    },{
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstArrayElement = 0,
+        .dstSet = descriptorSets[R_DESC_SET_MAIN],
+        .dstBinding = 1,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = &transformUbo
+    },{
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstArrayElement = 0,
+        .dstSet = descriptorSets[R_DESC_SET_MAIN],
+        .dstBinding = 2,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        .pBufferInfo = &materialUbo
     }};
 
     vkUpdateDescriptorSets(device, TANTO_ARRAY_SIZE(writes), writes, 0, NULL);
@@ -246,22 +308,27 @@ static void mainRender(const VkCommandBuffer* cmdBuf, const VkRenderPassBeginInf
 
     vkCmdBeginRenderPass(*cmdBuf, rpassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    const VkBuffer vertBuffers[2] = {
-        prim.vertexRegion.buffer,
-        prim.vertexRegion.buffer
-    };
+    for (int i = 0; i < scene.primCount; i++) 
+    {
+        Tanto_R_Primitive prim = scene.primitive[i];
 
-    const VkDeviceSize attrOffsets[2] = {
-        prim.attrOffsets[0] + prim.vertexRegion.offset,
-        prim.attrOffsets[1] + prim.vertexRegion.offset,
-    };
+        const VkBuffer vertBuffers[2] = {
+            prim.vertexRegion.buffer,
+            prim.vertexRegion.buffer
+        };
 
-    vkCmdBindVertexBuffers(*cmdBuf, 0, 2, vertBuffers, attrOffsets);
+        const VkDeviceSize attrOffsets[2] = {
+            prim.attrOffsets[0] + prim.vertexRegion.offset,
+            prim.attrOffsets[1] + prim.vertexRegion.offset,
+        };
 
-    vkCmdBindIndexBuffer(*cmdBuf, prim.indexRegion.buffer, 
-            prim.indexRegion.offset, TANTO_VERT_INDEX_TYPE);
+        vkCmdBindVertexBuffers(*cmdBuf, 0, 2, vertBuffers, attrOffsets);
 
-    vkCmdDrawIndexed(*cmdBuf, prim.indexCount, 1, 0, 0, 0);
+        vkCmdBindIndexBuffer(*cmdBuf, prim.indexRegion.buffer, 
+                prim.indexRegion.offset, TANTO_VERT_INDEX_TYPE);
+
+        vkCmdDrawIndexed(*cmdBuf, prim.indexCount, 1, 0, 0, 0);
+    }
 
     vkCmdEndRenderPass(*cmdBuf);
 }
@@ -272,6 +339,11 @@ void r_InitScene(void)
     // we know the window size
     initDescriptorSetsAndPipelineLayouts();
     updateStaticDescriptors();
+    // bind the scene to the buffer memory
+    scene.camera     = (CameraUBO*)cameraBuffer.hostData;
+    scene.materials  = (MaterialsUBO*)materialBuffer.hostData;
+    scene.transforms = (TransformsUBO*)transformBuffer.hostData;
+    scene.primCount = 0;
 }
 
 void r_InitRenderer(void)
@@ -358,22 +430,24 @@ void r_UpdateViewport(unsigned int width, unsigned int height,
     r_UpdateRenderCommands(colorBuffer);
 }
 
+Tanto_PrimId r_AddNewPrim(Tanto_R_Primitive newPrim, Tanto_R_Material newMat, Mat4 xform)
+{
+    const Tanto_PrimId primId = scene.primCount++;
+    assert(scene.primCount < MAX_PRIM_COUNT);
+    scene.primitive[primId]            = newPrim;
+    scene.materials->material[primId]  = newMat;
+    scene.transforms->xform[primId]    = xform;
+    return primId;
+}
+
 void r_UpdatePrimitive(Tanto_R_Primitive newPrim)
 {
-    printf("7\n");
-    if (prim.vertexRegion.hostData)
-    {
-        tanto_v_FreeBufferRegion(&prim.indexRegion);
-        printf("8\n");
-        tanto_v_FreeBufferRegion(&prim.vertexRegion);
-    }
-    prim = newPrim;
+    assert(0);
 }
 
 void r_UpdatePrimTransform(Mat4 m)
 {
-    UniformBuffer* uboData = (UniformBuffer*)(uniformBufferRegion.hostData);
-    uboData->matModel = m;
+    assert(0);
 }
 
 void r_CleanUp(void)
@@ -386,11 +460,10 @@ void r_CleanUp(void)
 
 void r_UpdateCamera(Tanto_Camera camera)
 {
-    UniformBuffer* uboData = (UniformBuffer*)(uniformBufferRegion.hostData);
-    uboData->matProj = camera.proj;
-    uboData->matView = camera.view;
-    uboData->viewInv = m_Invert4x4(&camera.view);
-    uboData->projInv = m_Invert4x4(&camera.proj);
+    scene.camera->matProj = camera.proj;
+    scene.camera->matView = camera.view;
+    scene.camera->viewInv = m_Invert4x4(&camera.view);
+    scene.camera->projInv = m_Invert4x4(&camera.proj);
 }
 
 void  r_SetViewport(unsigned int width, unsigned int height)

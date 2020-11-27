@@ -131,7 +131,7 @@ void HdTantoMesh::_PopulateTantoMesh(HdSceneDelegate *sceneDelegate,
         _transform = GfMatrix4f(sceneDelegate->GetTransform(id));
         std::cout << "Transform dirty!!" << '\n';
         transformDirty = true;
-        _renderer.SetPrimTransform(_transform);
+        //_renderer.SetPrimTransform(_transform);
     }
 
     if (pointsDirty && topologyDirty)
@@ -164,7 +164,7 @@ void HdTantoMesh::_PopulateTantoMesh(HdSceneDelegate *sceneDelegate,
         std::cout << "Normals size: " << normals.GetArraySize() << '\n';
         printf("Normals!\n");
         std::cout << GetNormals(sceneDelegate) << '\n';
-        _renderer.UpdatePrim(prim);
+        _renderer.AddPrim(prim, _transform, {0.5, 0.5, 0.5});
     }
 }
 

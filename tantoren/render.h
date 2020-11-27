@@ -5,22 +5,15 @@
 #include "common.h"
 
 typedef struct {
-    int foo;
-    int bar;
-} PushConstants;
-
-typedef struct {
-    Mat4 matModel;
-    Mat4 matView;
-    Mat4 matProj;
-    Mat4 viewInv;
-    Mat4 projInv;
-} UniformBuffer;
-
-typedef struct {
     Mat4 view;
     Mat4 proj;
 } Tanto_Camera;
+
+typedef struct {
+    Vec4 color;
+} Tanto_R_Material;
+
+typedef uint16_t Tanto_PrimId;
 
 void r_InitScene(void);
 void r_InitRenderer(void);
@@ -31,8 +24,7 @@ void r_Render(void);
 void r_ClearMesh(void);
 void r_CleanUp(void);
 void r_UpdateCamera(Tanto_Camera camera);
-void r_UpdatePrimitive(Tanto_R_Primitive newPrim);
-void r_UpdatePrimTransform(Mat4 m);
+Tanto_PrimId r_AddNewPrim(Tanto_R_Primitive newPrim, Tanto_R_Material newMat, Mat4 xform);
 void r_UpdateViewport(unsigned int width, unsigned int height,
         Tanto_V_BufferRegion* colorBuffer);
 const Tanto_R_Mesh* r_GetMesh(void);

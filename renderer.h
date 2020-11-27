@@ -11,6 +11,7 @@
 extern "C" 
 {
 #include <tanto/r_geo.h>
+#include "tantoren/render.h"
 }
 
 PXR_NAMESPACE_OPEN_SCOPE
@@ -45,11 +46,9 @@ public:
     ///   \param projMatrix The camera's view-to-NDC projection matrix.
     void SetCamera(const GfMatrix4f& viewMatrix, const GfMatrix4f& projMatrix);
     
-    void SetPrimTransform(const GfMatrix4f& xform);
-
     void UpdateRender(HdTantoRenderBuffer* colorBuffer);
 
-    void UpdatePrim(Tanto_R_Primitive prim);
+    Tanto_PrimId AddPrim(Tanto_R_Primitive prim, const GfMatrix4f& xform, const GfVec3f& color);
 
     /// Set the aov bindings to use for rendering.
     ///   \param aovBindings A list of aov bindings.
