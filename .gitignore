@@ -7,6 +7,7 @@ tanto
 testenv
 .clangd
 shaders
+twist.usd
 
 tantoren/build
 tantoren/compile_commands.json

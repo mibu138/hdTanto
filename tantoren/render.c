@@ -19,7 +19,6 @@
 
 static Tanto_V_Image attachmentColor;
 static Tanto_V_Image attachmentDepth;
-static Tanto_V_Image blitTarget;
 
 static VkRenderPass  renderpass;
 static VkFramebuffer framebuffer;
@@ -59,13 +58,6 @@ static void initAttachments(void)
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_IMAGE_ASPECT_DEPTH_BIT,
-        VK_SAMPLE_COUNT_1_BIT);
-
-    blitTarget = tanto_v_CreateImage(
-        TANTO_WINDOW_WIDTH, TANTO_WINDOW_HEIGHT,
-        colorFormat,
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT,
         VK_SAMPLE_COUNT_1_BIT);
 }
 
@@ -162,7 +154,7 @@ static void initDescriptorSetsAndPipelineLayouts(void)
         .bindings = {{
             .descriptorCount = 1,
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT
         }}
     }};
 
@@ -187,6 +179,7 @@ static void initPipelines(void)
             .renderPass = renderpass, 
             .sampleCount = VK_SAMPLE_COUNT_1_BIT,
             .frontFace   = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+            .cullMode    = VK_CULL_MODE_FRONT_BIT,
             .polygonMode = VK_POLYGON_MODE_FILL,
             .vertexDescription = tanto_r_GetVertexDescription3D_2Vec3(),
             .vertShader = SPVDIR"/flat-vert.spv",
@@ -202,7 +195,7 @@ static void updateStaticDescriptors(void)
 {
     uniformBufferRegion = tanto_v_RequestBufferRegion(sizeof(UniformBuffer), 
             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, TANTO_V_MEMORY_HOST_GRAPHICS_TYPE);
-    memset(uniformBufferRegion.hostData, 0, sizeof(Parms));
+    memset(uniformBufferRegion.hostData, 0, sizeof(UniformBuffer));
     UniformBuffer* uboData = (UniformBuffer*)(uniformBufferRegion.hostData);
 
     Mat4 view = m_Ident_Mat4();
@@ -396,6 +389,8 @@ void r_UpdateCamera(Tanto_Camera camera)
     UniformBuffer* uboData = (UniformBuffer*)(uniformBufferRegion.hostData);
     uboData->matProj = camera.proj;
     uboData->matView = camera.view;
+    uboData->viewInv = m_Invert4x4(&camera.view);
+    uboData->projInv = m_Invert4x4(&camera.proj);
 }
 
 void  r_SetViewport(unsigned int width, unsigned int height)

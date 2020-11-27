@@ -58,7 +58,7 @@ void HdTantoRenderer::SetCamera(const GfMatrix4f& viewMatrix, const GfMatrix4f& 
     std::cout << "View0: \n" << viewMatrix << '\n';
     std::cout << "Proj0: \n" << projMatrix << '\n';
 
-    proj->x[1][1] *= -1;
+    //proj->x[1][1] *= -1;
 
     printf("View1:\n");
     printMat4(view);

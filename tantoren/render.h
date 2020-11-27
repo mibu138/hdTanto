@@ -13,6 +13,8 @@ typedef struct {
     Mat4 matModel;
     Mat4 matView;
     Mat4 matProj;
+    Mat4 viewInv;
+    Mat4 projInv;
 } UniformBuffer;
 
 typedef struct {
