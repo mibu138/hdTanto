@@ -17,7 +17,7 @@
 
 #define SPVDIR "./shaders/spv"
 
-#define MAX_PRIM_COUNT 500
+#define MAX_PRIM_COUNT 2000
 
 typedef struct {
     int foo;
@@ -55,8 +55,8 @@ static struct {
     uint16_t          primCount;
     CameraUBO*        camera;
     Tanto_R_Primitive primitive[MAX_PRIM_COUNT];
-    TransformsUBO*    transforms;
-    MaterialsUBO*     materials;
+    Mat4*             transforms;
+    Tanto_R_Material* materials;
 } scene;
 
 // should not be accessed directly. go through the scene.
@@ -161,7 +161,6 @@ static void initFramebuffer(void)
         attachmentColor.view, attachmentDepth.view
     };
 
-
     const VkFramebufferCreateInfo fbi = {
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .pNext = NULL,
@@ -196,7 +195,7 @@ static void initDescriptorSetsAndPipelineLayouts(void)
             // materials
             .descriptorCount = 1,
             .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_VERTEX_BIT
         }}
     }};
 
@@ -333,6 +332,15 @@ static void mainRender(const VkCommandBuffer* cmdBuf, const VkRenderPassBeginInf
     vkCmdEndRenderPass(*cmdBuf);
 }
 
+static void printMaterials(void)
+{
+    for (int i = 0; i < scene.primCount; i++) 
+    {
+        printf("Material %d: ", i);   
+        printVec4(&scene.materials[i].color);
+    }
+}
+
 void r_InitScene(void)
 {
     // we just want to initialize the mesh buffers first because the mesh syncs get called before 
@@ -341,8 +349,8 @@ void r_InitScene(void)
     updateStaticDescriptors();
     // bind the scene to the buffer memory
     scene.camera     = (CameraUBO*)cameraBuffer.hostData;
-    scene.materials  = (MaterialsUBO*)materialBuffer.hostData;
-    scene.transforms = (TransformsUBO*)transformBuffer.hostData;
+    scene.materials  = (Tanto_R_Material*)materialBuffer.hostData;
+    scene.transforms = (Mat4*)transformBuffer.hostData;
     scene.primCount = 0;
 }
 
@@ -408,6 +416,8 @@ void r_UpdateRenderCommands(Tanto_V_BufferRegion* colorBuffer)
     vkCmdCopyImageToBuffer(cmdPoolRender.buffer, attachmentColor.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, colorBuffer->buffer, 1, &imgCopy);
 
     V_ASSERT( vkEndCommandBuffer(cmdPoolRender.buffer) );
+
+    printMaterials();
 }
 
 void r_Render(void)
@@ -434,9 +444,9 @@ Tanto_PrimId r_AddNewPrim(Tanto_R_Primitive newPrim, Tanto_R_Material newMat, Ma
 {
     const Tanto_PrimId primId = scene.primCount++;
     assert(scene.primCount < MAX_PRIM_COUNT);
-    scene.primitive[primId]            = newPrim;
-    scene.materials->material[primId]  = newMat;
-    scene.transforms->xform[primId]    = xform;
+    scene.primitive[primId]  = newPrim;
+    scene.materials[primId]  = newMat;
+    scene.transforms[primId] = xform;
     return primId;
 }
 
@@ -460,8 +470,8 @@ void r_CleanUp(void)
 
 void r_UpdateCamera(Tanto_Camera camera)
 {
-    scene.camera->matProj = camera.proj;
     scene.camera->matView = camera.view;
+    scene.camera->matProj = camera.proj;
     scene.camera->viewInv = m_Invert4x4(&camera.view);
     scene.camera->projInv = m_Invert4x4(&camera.proj);
 }

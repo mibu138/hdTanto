@@ -140,6 +140,7 @@ private:
     VtVec3iArray   _triangulatedIndices;
     VtIntArray     _trianglePrimitiveParams;
     GfMatrix4f     _transform;
+    VtVec3fArray   _color;
 
 
     // Populate the embree geometry object based on scene data.

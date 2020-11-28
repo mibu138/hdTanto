@@ -26,7 +26,17 @@ PXR_NAMESPACE_OPEN_SCOPE
 ///  - Lighting via N dot Camera-ray, simulating a point light at the camera
 ///    origin.
 ///  - Ambient occlusion.
-///
+
+struct PrimData {
+    PrimData(const VtVec3fArray& _points, const VtVec3iArray& _indices, const GfMatrix4f& _xform, const GfVec3f* _color = nullptr)
+        : points(_points), indices(_indices), xform(_xform), color(_color)
+    {}
+    const VtVec3fArray& points;
+    const VtVec3iArray& indices;
+    const GfMatrix4f&   xform;
+    const GfVec3f*      color;
+};
+
 class HdTantoRenderer final {
 public:
     /// Renderer constructor.
@@ -48,7 +58,7 @@ public:
     
     void UpdateRender(HdTantoRenderBuffer* colorBuffer);
 
-    Tanto_PrimId AddPrim(Tanto_R_Primitive prim, const GfMatrix4f& xform, const GfVec3f& color);
+    Tanto_PrimId AddPrim(PrimData);
 
     /// Set the aov bindings to use for rendering.
     ///   \param aovBindings A list of aov bindings.
@@ -69,6 +79,7 @@ public:
 
 private:
     HdRenderPassAovBindingVector _aovBindings;
+    std::mutex mutexAddPrim;
 
 };
 
