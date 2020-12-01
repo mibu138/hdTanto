@@ -17,7 +17,7 @@
 
 #define SPVDIR "./shaders/spv"
 
-#define MAX_PRIM_COUNT 2000
+#define MAX_PRIM_COUNT 100
 
 typedef struct {
     int foo;
@@ -463,8 +463,8 @@ void r_UpdatePrimTransform(Mat4 m)
 void r_CleanUp(void)
 {
     vkDestroyFramebuffer(device, framebuffer, NULL);
-    tanto_v_DestroyImage(attachmentDepth);
-    tanto_v_DestroyImage(attachmentColor);
+    tanto_v_FreeImage(&attachmentDepth);
+    tanto_v_FreeImage(&attachmentColor);
     vkDestroyPipeline(device, pipelineMain, NULL);
 }
 

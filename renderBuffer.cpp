@@ -56,7 +56,8 @@ HdTantoRenderBuffer::_Deallocate()
     _height = 0;
     _format = HdFormatInvalid;
     _isMapped = false;
-    tanto_v_FreeBufferRegion(&_buffer);
+    if (_buffer.pChain)
+        tanto_v_FreeBufferRegion(&_buffer);
 }
 
 /*static*/
