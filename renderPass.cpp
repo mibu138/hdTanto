@@ -29,7 +29,14 @@
 
 #include <iostream>
 
+extern "C" {
+#include "tanto/t_utils.h"
+};
+
+static Tanto_Timer timer;
+
 PXR_NAMESPACE_OPEN_SCOPE
+    
 
 HdTantoPass::HdTantoPass(
     HdRenderIndex *index,
@@ -41,6 +48,7 @@ HdTantoPass::HdTantoPass(
     _aovBindings(),
     _colorBuffer(SdfPath::EmptyPath())
 {
+    tanto_TimerInit(&timer);
 }
 
 HdTantoPass::~HdTantoPass()
@@ -55,6 +63,7 @@ HdTantoPass::_Execute(
     HdRenderPassStateSharedPtr const& renderPassState,
     TfTokenVector const &renderTags)
 {
+    tanto_TimerStart(&timer);
     std::cout << "=> Execute RenderPass" << std::endl;
 
     GfVec4f vp = renderPassState->GetViewport();
@@ -66,6 +75,8 @@ HdTantoPass::_Execute(
     if (_width != vp[2] || _height != vp[3]) {
         _width = vp[2];
         _height = vp[3];
+
+        printf("Viewport size changed.\n");
 
         HdTantoRenderBuffer* cb = static_cast<HdTantoRenderBuffer*>(bindings[0].renderBuffer);
         if (!initialized)
@@ -102,6 +113,8 @@ HdTantoPass::_Execute(
     rb->Map();
     _renderer.Render(NULL);
     rb->Unmap();
+    tanto_TimerStop(&timer);
+    tanto_PrintTime(&timer);
     //    //_renderThread->StopRender();
     //
     //        HdRenderPassAovBinding colorAov;

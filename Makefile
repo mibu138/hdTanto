@@ -44,4 +44,4 @@ build/%.o: %.cpp $(DEPS)
 	$(CC) $(CFLAGS) $(INFLAGS) -c $< -o $@
 
 clean:
-	rm -f build/* ; rm hdTanto.so
+	rm -f build/* ; rm hdTanto.so ; cd tantoren ; make clean ; cd ..

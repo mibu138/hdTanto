@@ -24,7 +24,7 @@
 #ifndef TANTO_RENDER_PASS_PASS_H
 #define TANTO_RENDER_PASS_PASS_H
 
-#include "pxr/pxr.h"
+#include <pxr/pxr.h>
 #include "pxr/imaging/hd/renderPass.h"
 #include "pxr/imaging/hd/renderThread.h"
 #include "renderBuffer.h"

@@ -50,6 +50,7 @@ static const VkFormat colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
 static const VkFormat depthFormat = VK_FORMAT_D32_SFLOAT;
 
 static Tanto_V_CommandPool cmdPoolRender;
+static Tanto_V_CommandPool cmdPoolTransfer;
 
 static struct {
     uint16_t          primCount;

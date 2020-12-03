@@ -20,37 +20,13 @@ HdTantoRenderBuffer::~HdTantoRenderBuffer()
 
 /*virtual*/
 void
-HdTantoRenderBuffer::Sync(HdSceneDelegate *sceneDelegate,
-                           HdRenderParam *renderParam,
-                           HdDirtyBits *dirtyBits)
-{
-    //if (*dirtyBits & DirtyDescription) {
-    //    // Tanto has the background thread write directly into render buffers,
-    //    // so we need to stop the render thread before reallocating them.
-    //    static_cast<HdTantoRenderParam*>(renderParam)->AcquireSceneForEdit();
-    //}
-
-    HdRenderBuffer::Sync(sceneDelegate, renderParam, dirtyBits);
-}
-
-/*virtual*/
-void
-HdTantoRenderBuffer::Finalize(HdRenderParam *renderParam)
-{
-    // Tanto has the background thread write directly into render buffers,
-    // so we need to stop the render thread before removing them.
-    //static_cast<HdTantoRenderParam*>(renderParam)->AcquireSceneForEdit();
-
-    HdRenderBuffer::Finalize(renderParam);
-}
-
-/*virtual*/
-void
 HdTantoRenderBuffer::_Deallocate()
 {
     // If the buffer is mapped while we're doing this, there's not a great
     // recovery path...
     TF_VERIFY(!IsMapped());
+
+    printf("Deallocating buffer\n");
 
     _width = 0;
     _height = 0;
