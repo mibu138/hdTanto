@@ -1,15 +1,15 @@
 CC = g++
-#USDLIB = $(HOME)/dev/USD/build/lib
-#USDINC = $(HOME)/dev/USD/build/include
-USDLIB = $(HFS)/dsolib 
-USDINC = $(HFS)/toolkit/include
-PYTHONLIB = $(HFS)/python/lib
-CFLAGS  = -Wall -fPIC -g -std=c++14 -D_GLIBCXX_USE_CXX11_ABI=0
-LDFLAGS = -L$(USDLIB) -L$(PYTHONLIB) -L$(HOME)/lib -Ltantoren
+USDLIB = $(HOME)/dev/USD/build/lib
+USDINC = $(HOME)/dev/USD/build/include
+HUSDLIB = $(HFS)/dsolib 
+HUSDINC = $(HFS)/toolkit/include
+HPYTHONLIB = $(HFS)/python/lib
+CFLAGS  = -Wall -fPIC -g #-std=c++14 -D_GLIBCXX_USE_CXX11_ABI=0
+LDFLAGS = -L$(HOME)/lib -Ltantoren
 INFLAGS = -I$(USDINC) -I/usr/include/python3.7m -I$(HOME)/dev
 USDLIBS  = -lusd -lhd -lsdf -lpxOsd -lvt -ltrace -lgf -ltf -lpython3.7m -lboost_python37 -lhdx -lhf
 HUSDLIBS = -lpxr_tf -lpxr_usd -lpxr_hd -lpxr_sdf -lpxr_pxOsd -lpxr_vt -lpxr_trace -lpxr_gf -lpxr_hdx -lpxr_hf -lpython2.7 -lhboost_python27 
-LIBS = -ltanto -ltantoren $(HUSDLIBS) -lvulkan -lfreetype -lxcb -lxcb-keysyms
+LIBS = -ltanto -ltantoren -lvulkan -lfreetype -lxcb -lxcb-keysyms
 
 NAME = hdTanto
 
@@ -31,17 +31,20 @@ OBJS = \
 
 all: delegate 
 
+hou: INFLAGS = -I$(HUSDINC) -I/usr/include/python3.7m -I$(HOME)/dev
+hou: houdelegate
+
 renderer:
 	cd tanto ; make ; cd ../tantoren ; make ; cd ..
 
 delegate: renderer $(OBJS) 
-	$(CC) $(LDFLAGS) -shared -Wl,--no-undefined -o $(NAME).so $(OBJS) $(LIBS) 
+	$(CC) -L$(USDLIB) $(LDFLAGS) -shared -Wl,--no-undefined -o $(NAME).so $(OBJS) $(USDLIBS) $(LIBS) 
 
-test: testenv/testMyDelegate.cpp delegate
-	$(CC) $(CFLAGS) $(INFLAGS) $(LDFLAGS) testenv/testMyDelegate.cpp -o testenv/test $(LIBS)
+houdelegate: renderer $(OBJS) 
+	$(CC) -L$(HUSDLIB) -L$(HPYTHONLIB) $(LDFLAGS) -shared -Wl,--no-undefined -o $(NAME).so $(OBJS) $(HUSDLIBS) $(LIBS) 
 
 build/%.o: %.cpp $(DEPS)
 	$(CC) $(CFLAGS) $(INFLAGS) -c $< -o $@
 
 clean:
-	rm -f build/* ; rm hdTanto.so ; cd tantoren ; make clean ; cd ..
+	rm -f build/* ; rm $(NAME).so ; cd tantoren ; make clean ; cd ..
