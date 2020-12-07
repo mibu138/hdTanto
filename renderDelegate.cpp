@@ -225,24 +225,26 @@ HdTantoDelegate::GetDefaultAovDescriptor(TfToken const& name) const
     if (name == HdAovTokens->color) {
         return HdAovDescriptor(HdFormatUNorm8Vec4, true,
                                VtValue(GfVec4f(0.0f)));
-    } else if (name == HdAovTokens->normal || name == HdAovTokens->Neye) {
-        return HdAovDescriptor(HdFormatFloat32Vec3, false,
-                               VtValue(GfVec3f(-1.0f)));
-    } else if (name == HdAovTokens->depth) {
+    } 
+    //else if (name == HdAovTokens->normal || name == HdAovTokens->Neye) {
+    //    return HdAovDescriptor(HdFormatFloat32Vec3, false,
+    //                           VtValue(GfVec3f(-1.0f)));
+    else if (name == HdAovTokens->depth) {
         return HdAovDescriptor(HdFormatFloat32, false, VtValue(1.0f));
-    } else if (name == HdAovTokens->cameraDepth) {
-        return HdAovDescriptor(HdFormatFloat32, false, VtValue(0.0f));
-    } else if (name == HdAovTokens->primId ||
-               name == HdAovTokens->instanceId ||
-               name == HdAovTokens->elementId) {
-        return HdAovDescriptor(HdFormatInt32, false, VtValue(-1));
-    } else {
-        HdParsedAovToken aovId(name);
-        if (aovId.isPrimvar) {
-            return HdAovDescriptor(HdFormatFloat32Vec3, false,
-                                   VtValue(GfVec3f(0.0f)));
-        }
-    }
+    } 
+    //else if (name == HdAovTokens->cameraDepth) {
+    //    return HdAovDescriptor(HdFormatFloat32, false, VtValue(0.0f));
+    //} else if (name == HdAovTokens->primId ||
+    //           name == HdAovTokens->instanceId ||
+    //           name == HdAovTokens->elementId) {
+    //    return HdAovDescriptor(HdFormatInt32, false, VtValue(-1));
+    //} else {
+    //    HdParsedAovToken aovId(name);
+    //    if (aovId.isPrimvar) {
+    //        return HdAovDescriptor(HdFormatFloat32Vec3, false,
+    //                               VtValue(GfVec3f(0.0f)));
+    //    }
+    //}
 
     return HdAovDescriptor();
 }
