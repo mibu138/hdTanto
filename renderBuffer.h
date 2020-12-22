@@ -29,6 +29,7 @@
 #include "pxr/base/gf/vec2f.h"
 #include "pxr/base/gf/vec3f.h"
 #include "pxr/base/gf/vec4f.h"
+#include "pxr/imaging/hgiVulkan/hgi.h"
 
 extern "C" 
 {
@@ -106,6 +107,8 @@ public:
     virtual void Resolve() override;
 
     Tanto_V_BufferRegion* GetBufferRegion(void);
+
+    virtual VtValue GetResource(bool multiSampled) const override;
 
 private:
     // Release any allocated resources.

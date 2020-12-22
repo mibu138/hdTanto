@@ -1,0 +1,1 @@
+gdb --args python3 /home/michaelb/dev/USD/build/bin/usdview box.usd
